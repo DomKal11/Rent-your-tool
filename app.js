@@ -12,6 +12,9 @@ require("./config")(app);
 const allRoutes = require("./routes");
 app.use("/api", allRoutes);
 
+const toolRouter = require("./routes/tool.routes");
+app.use("/api", toolRouter);
+
 const projectRouter = require("./routes/project.routes");
 app.use("/api", isAuthenticated, projectRouter);
 
