@@ -5,16 +5,16 @@ const toolSchema = new Schema(
   {
     name: String,
     price: Number,
-    image: String,
+    imageUrl: String,
     details: String,
-    status: String,
+    status: {type: String, default: "available"},
     from: Date,
     to: Date,
-    county: String,
+    city: String,
     location: [{ type: Number}],
-    owner: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    owner: { type: Schema.Types.ObjectId, ref: "User" },
     rentedby: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    feedback: [{ type: Schema.Types.ObjectId, ref: "Feedback" }],
+    comment: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
   },
   {
     // this second object adds extra properties: `createdAt` and `updatedAt`

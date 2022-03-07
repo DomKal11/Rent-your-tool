@@ -16,7 +16,7 @@ const toolRouter = require("./routes/tool.routes");
 app.use("/api", toolRouter);
 
 const projectRouter = require("./routes/project.routes");
-app.use("/api", isAuthenticated, projectRouter);
+app.use("/api", projectRouter);
 
 const taskRouter = require("./routes/task.routes");
 app.use("/api", isAuthenticated, taskRouter);
