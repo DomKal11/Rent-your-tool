@@ -123,6 +123,19 @@ router.post("/comment/:id", (req, res, next) => {
 router.post("/tool/:toolId/:status", (req, res, next) => {
   const { toolId, status } = req.params;
 
+  if(status === "available"){
+    Tool.findByIdAndUpdate(toolId, { status: status, $set: { rentedby: [] } }, {new: true})
+    .populate(["owner", "rentedby", "comment"])
+    .populate({
+      path: "comment",
+      populate: {
+        path: "author",
+        model: "User",
+      },
+    })
+    .then((response) => res.json(response));
+  }
+  else{
   Tool.findByIdAndUpdate(toolId, { status: status }, {new: true})
     .populate(["owner", "rentedby", "comment"])
     .populate({
@@ -133,6 +146,7 @@ router.post("/tool/:toolId/:status", (req, res, next) => {
       },
     })
     .then((response) => res.json(response));
+  }
 });
 
 //POST route for changing rentedBy to actual user
@@ -152,10 +166,46 @@ router.post("/tool/:toolId/:userId/rent", (req, res, next) => {
 });
 
 //GET route to delete comment
-router.get("/comment/:commentId/delete", (req, res, next) => {
-  const { commentId } = req.params;
+router.get("/comment/:toolId/:commentId/delete", (req, res, next) => {
+  const { toolId, commentId } = req.params;
 
-  Comment.findByIdAndDelete(commentId).then(() => console.log("deleted"));
+  Comment.findByIdAndDelete(commentId)
+  .then((response) => {Tool.findByIdAndUpdate(toolId, { $pull: { comment: { $in: [ commentId ] }} }, {new: true})
+  .populate(["owner", "rentedby", "comment"])
+  .populate({
+    path: "comment",
+    populate: {
+      path: "author",
+      model: "User",
+    },
+  })
+  .then((response) => res.json(response));});
+});
+
+//GET route to delete tool
+router.get("/tool/:toolId/delete", (req, res, next) => {
+  const { toolId } = req.params;
+
+  Tool.findByIdAndDelete(toolId)
+  .then((response) => {Tool.find()
+    .populate(["owner", "rentedby"])
+    .then((allTools) => res.json(allTools))
+    .catch((err) => res.json(err));
+});
+});
+
+// PUT  /api/tool/:toolId/edit  -  Updates a specific tool by d
+router.patch("/tool/:toolId/edit", (req, res, next) => {
+  const { toolId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(toolId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
+
+  Tool.findByIdAndUpdate(toolId, req.body, { new: true })
+    .then((updatedProject) => res.json(updatedProject))
+    .catch((error) => res.json(error));
 });
 
 module.exports = router;
