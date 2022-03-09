@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 
 const Tool = require("../models/Tool.model");
 const Comment = require("../models/Comment.model");
+const User = require("../models/User.model");
 
 const fileUploader = require("../config/cloudinary.config");
 
@@ -100,9 +101,13 @@ router.post("/comment/:id", (req, res, next) => {
   newComment
     .save()
     .then((savedComment) => {
-      Tool.findByIdAndUpdate(id, {
-        $push: { comment: savedComment._id },
-      }, {new: true})
+      Tool.findByIdAndUpdate(
+        id,
+        {
+          $push: { comment: savedComment._id },
+        },
+        { new: true }
+      )
         .populate(["owner", "rentedby", "comment"])
         .populate({
           path: "comment",
@@ -123,29 +128,32 @@ router.post("/comment/:id", (req, res, next) => {
 router.post("/tool/:toolId/:status", (req, res, next) => {
   const { toolId, status } = req.params;
 
-  if(status === "available"){
-    Tool.findByIdAndUpdate(toolId, { status: status, $set: { rentedby: [] } }, {new: true})
-    .populate(["owner", "rentedby", "comment"])
-    .populate({
-      path: "comment",
-      populate: {
-        path: "author",
-        model: "User",
-      },
-    })
-    .then((response) => res.json(response));
-  }
-  else{
-  Tool.findByIdAndUpdate(toolId, { status: status }, {new: true})
-    .populate(["owner", "rentedby", "comment"])
-    .populate({
-      path: "comment",
-      populate: {
-        path: "author",
-        model: "User",
-      },
-    })
-    .then((response) => res.json(response));
+  if (status === "available") {
+    Tool.findByIdAndUpdate(
+      toolId,
+      { status: status, $set: { rentedby: [] } },
+      { new: true }
+    )
+      .populate(["owner", "rentedby", "comment"])
+      .populate({
+        path: "comment",
+        populate: {
+          path: "author",
+          model: "User",
+        },
+      })
+      .then((response) => res.json(response));
+  } else {
+    Tool.findByIdAndUpdate(toolId, { status: status }, { new: true })
+      .populate(["owner", "rentedby", "comment"])
+      .populate({
+        path: "comment",
+        populate: {
+          path: "author",
+          model: "User",
+        },
+      })
+      .then((response) => res.json(response));
   }
 });
 
@@ -153,7 +161,7 @@ router.post("/tool/:toolId/:status", (req, res, next) => {
 router.post("/tool/:toolId/:userId/rent", (req, res, next) => {
   const { toolId, userId } = req.params;
 
-  Tool.findByIdAndUpdate(toolId, { rentedby: userId }, {new: true})
+  Tool.findByIdAndUpdate(toolId, { rentedby: userId }, { new: true })
     .populate(["owner", "rentedby", "comment"])
     .populate({
       path: "comment",
@@ -169,29 +177,34 @@ router.post("/tool/:toolId/:userId/rent", (req, res, next) => {
 router.get("/comment/:toolId/:commentId/delete", (req, res, next) => {
   const { toolId, commentId } = req.params;
 
-  Comment.findByIdAndDelete(commentId)
-  .then((response) => {Tool.findByIdAndUpdate(toolId, { $pull: { comment: { $in: [ commentId ] }} }, {new: true})
-  .populate(["owner", "rentedby", "comment"])
-  .populate({
-    path: "comment",
-    populate: {
-      path: "author",
-      model: "User",
-    },
-  })
-  .then((response) => res.json(response));});
+  Comment.findByIdAndDelete(commentId).then((response) => {
+    Tool.findByIdAndUpdate(
+      toolId,
+      { $pull: { comment: { $in: [commentId] } } },
+      { new: true }
+    )
+      .populate(["owner", "rentedby", "comment"])
+      .populate({
+        path: "comment",
+        populate: {
+          path: "author",
+          model: "User",
+        },
+      })
+      .then((response) => res.json(response));
+  });
 });
 
 //GET route to delete tool
 router.get("/tool/:toolId/delete", (req, res, next) => {
   const { toolId } = req.params;
 
-  Tool.findByIdAndDelete(toolId)
-  .then((response) => {Tool.find()
-    .populate(["owner", "rentedby"])
-    .then((allTools) => res.json(allTools))
-    .catch((err) => res.json(err));
-});
+  Tool.findByIdAndDelete(toolId).then((response) => {
+    Tool.find()
+      .populate(["owner", "rentedby"])
+      .then((allTools) => res.json(allTools))
+      .catch((err) => res.json(err));
+  });
 });
 
 // PUT  /api/tool/:toolId/edit  -  Updates a specific tool by d
@@ -205,6 +218,36 @@ router.patch("/tool/:toolId/edit", (req, res, next) => {
 
   Tool.findByIdAndUpdate(toolId, req.body, { new: true })
     .then((updatedProject) => res.json(updatedProject))
+    .catch((error) => res.json(error));
+});
+
+//  GET /api/tool/:toolId -  Retrieves a specific project by id
+router.get("/user/:userId", (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
+
+  // Each Project document has `tasks` array holding `_id`s of Task documents
+  // We use .populate() method to get swap the `_id`s for the actual Task documents
+  User.findById(userId)
+    .then((user) => res.status(200).json(user))
+    .catch((error) => res.json(error));
+});
+
+// PUT  /api/tool/:toolId/edit  -  Updates a specific tool by d
+router.patch("/user/:userId/edit", (req, res, next) => {
+  const { userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
+
+  User.findByIdAndUpdate(userId, req.body, { new: true })
+    .then((updatedUser) => res.json(updatedUser))
     .catch((error) => res.json(error));
 });
 
