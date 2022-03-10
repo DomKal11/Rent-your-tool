@@ -1,12 +1,6 @@
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Issues][issues-shield]][issues-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
 ### API Documentation
 
-API is deployed on HEROKU: <a href="https://rentyourtools.herokuapp.com/api"><strong>LINK</strong></a>
+API is deployed on HEROKU - <a href="https://rentyourtools.herokuapp.com/api"><strong>LINK</strong></a>
 
 #### Routes
 
@@ -23,32 +17,65 @@ API is deployed on HEROKU: <a href="https://rentyourtools.herokuapp.com/api"><st
 | DELETE    | `/api/:toolId/delete`      | (empty)      | Deleting tool by id                    |
 
 
-##### Task routes
+##### User routes
 
-| HTTP verb | URL                  | Request body | Action                     |
-| --------- | -------------------- | ------------ | -------------------------- |
-| POST      | `/api/tasks`         | JSON         | Adds a new task            |
+| HTTP verb | URL                      | Request body | Action                     |
+| --------- | ------------------------ | ------------ | -------------------------- |
+| GET       | `/api/user/:iserId`      | (empty)      | Returns user data          |
+| PATCH     | `/api/user/:iserId/edit` | JSON         | Updating user profile      |
+
+
+##### Comment routes
+
+| HTTP verb | URL                                      | Request body | Action                     |
+| --------- | ---------------------------------------- | ------------ | -------------------------- |
+| POST      | `/api/comment/:id`                       | JSON         | Posting comment            |
+| DELETE    | `/api/comment/:toolId/:commentId/delete` | (empty)      | Deleting comment           |
 
 <hr>
 
 #### Models
 
-##### Project Model
+##### Tool Model
 
 ```js
 {
-  title: String,
-  description: String,
-  tasks: [ { type: Schema.Types.ObjectId, ref: 'Task' } ]
-}
+    name: String,
+    price: Number,
+    imageUrl: String,
+    details: String,
+    status: {type: String, default: "available"},
+    from: Date,
+    to: Date,
+    city: String,
+    location: [{ type: Number}],
+    owner: { type: Schema.Types.ObjectId, ref: "User" },
+    rentedby: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    comment: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
+  }
 ```
 
-##### Task Model
+##### User Model
 
 ```js
 {
-  title: String,
-  description: String,
-  project: { type: Schema.Types.ObjectId, ref: 'Project' }
-}
+    email: {
+      type: String,
+      unique: true 
+    },
+    password: String,
+    name: String,
+    phone: String
+  }
+```
+
+##### Comment Model
+
+```js
+{
+    author: { type: Schema.Types.ObjectId, ref: "User" },
+    rate: Number,
+    text: String,
+    tool: { type: Schema.Types.ObjectId, ref: "Tool" },
+  }
 ```
