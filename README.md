@@ -4,15 +4,18 @@ We will start our project by first documenting all of the routes and data models
 
 #### Routes
 
-##### Project routes
+##### Tool routes
 
-| HTTP verb | URL                        | Request body | Action                        |
-| --------- | -------------------------- | ------------ | ----------------------------- |
-| GET       | `/api/projects`            | (empty)      | Returns all the projects      |
-| POST      | `/api/projects`            | JSON         | Adds a new project            |
-| GET       | `/api/projects/:projectId` | (empty)      | Returns the specified project |
-| PUT       | `/api/projects/:projectId` | JSON         | Edits the specified project   |
-| DELETE    | `/api/projects/:projectId` | (empty)      | Deletes the specified project |
+| HTTP verb | URL                        | Request body | Action                                 |
+| --------- | -------------------------- | ------------ | -------------------------------------- |
+| GET       | `/api/tools`               | (empty)      | Returns all the tools                  |
+| POST      | `/api/tools`               | JSON         | Adds a new tool                        |
+| GET       | `/api/tool/:toolId`        | (empty)      | Returns the specified tool             |
+| PATCH     | `/api/tool/:toolId/:status`| JSON         | Changing status (available/rented      |
+| PATCH     | `/api/:toolId/:userId/rent`| JSON         | Changing "rentedby" to user who rented |
+| PATCH     | `/api/:toolId/edit`        | JSON         | Changing tool parameters (edit)        |
+| DELETE    | `/api/:toolId/delete`      | (empty)      | Deleting tool by id                    |
+
 
 ##### Task routes
 
