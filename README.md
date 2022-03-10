@@ -1,6 +1,13 @@
+<div align="center">
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Issues][issues-shield]][issues-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
+ </div>
+
 ### API Documentation
 
-We will start our project by first documenting all of the routes and data models for our API. Following best practices we will use _verbs_ to specify the type of operation being done and _nouns_ when naming endpoints.
+API is deployed on HEROKU: <a href="https://rentyourtools.herokuapp.com/api"><strong>LINK</strong></a>
 
 #### Routes
 
