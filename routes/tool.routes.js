@@ -3,16 +3,14 @@ const router = express.Router();
 const mongoose = require("mongoose");
 
 const Tool = require("../models/Tool.model");
-const Comment = require("../models/Comment.model");
-const User = require("../models/User.model");
 
 const fileUploader = require("../config/cloudinary.config");
 
-//  GET /api/tools -  Retrieves all
+//  GET /api/tools -  Retrieves all tools
 router.get("/tools", (req, res, next) => {
   Tool.find()
     .populate(["owner", "rentedby"])
-    .then((allTools) => res.json(allTools))
+    .then((allTools) => res.status(200).json(allTools))
     .catch((err) => res.json(err));
 });
 
@@ -31,7 +29,7 @@ router.post("/upload", fileUploader.single("imageUrl"), (req, res, next) => {
   res.json({ fileUrl: req.file.path });
 });
 
-//  POST /api/tools  -  Creates a new
+//  POST /api/tools  -  Creates a new tool
 router.post("/tools", fileUploader.single("imageUrl"), (req, res, next) => {
   const {
     name,
@@ -62,11 +60,11 @@ router.post("/tools", fileUploader.single("imageUrl"), (req, res, next) => {
     rentedby,
     feedback,
   })
-    .then((response) => res.json(response))
+    .then((response) => res.status(200).json(response))
     .catch((err) => res.json(err));
 });
 
-//  GET /api/tool/:toolId -  Retrieves a specific project by id
+//  GET /api/tool/:toolId -  Retrieves a specific tool by id
 router.get("/tool/:toolId", (req, res, next) => {
   const { toolId } = req.params;
 
@@ -75,8 +73,6 @@ router.get("/tool/:toolId", (req, res, next) => {
     return;
   }
 
-  // Each Project document has `tasks` array holding `_id`s of Task documents
-  // We use .populate() method to get swap the `_id`s for the actual Task documents
   Tool.findById(toolId)
     .populate(["owner", "rentedby", "comment"])
     .populate({
@@ -90,43 +86,14 @@ router.get("/tool/:toolId", (req, res, next) => {
     .catch((error) => res.json(error));
 });
 
-//  POST /api/comment  -  Creates a new
-router.post("/comment/:id", (req, res, next) => {
-  const { id } = req.params;
-  const { author, comment, rate } = req.body;
-
-  console.log("Comment:", id, author, comment, rate);
-  let newComment = new Comment({ author, text: comment, rate, tool: id });
-
-  newComment
-    .save()
-    .then((savedComment) => {
-      Tool.findByIdAndUpdate(
-        id,
-        {
-          $push: { comment: savedComment._id },
-        },
-        { new: true }
-      )
-        .populate(["owner", "rentedby", "comment"])
-        .populate({
-          path: "comment",
-          populate: {
-            path: "author",
-            model: "User",
-          },
-        })
-        .then((response) => res.json(response));
-    })
-    .catch((err) => {
-      console.log(`Error while creating comment: ${err}`);
-      next(err);
-    });
-});
-
-//POST route for changing status (available/rent)
-router.post("/tool/:toolId/:status", (req, res, next) => {
+// PATCH route for changing status (available/rented)
+router.patch("/tool/:toolId/:status", (req, res, next) => {
   const { toolId, status } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(toolId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
 
   if (status === "available") {
     Tool.findByIdAndUpdate(
@@ -142,7 +109,8 @@ router.post("/tool/:toolId/:status", (req, res, next) => {
           model: "User",
         },
       })
-      .then((response) => res.json(response));
+      .then((response) => res.status(200).json(response))
+      .catch((error) => res.json(error));
   } else {
     Tool.findByIdAndUpdate(toolId, { status: status }, { new: true })
       .populate(["owner", "rentedby", "comment"])
@@ -153,13 +121,22 @@ router.post("/tool/:toolId/:status", (req, res, next) => {
           model: "User",
         },
       })
-      .then((response) => res.json(response));
+      .then((response) => res.status(200).json(response))
+      .catch((error) => res.json(error));
   }
 });
 
-//POST route for changing rentedBy to actual user
-router.post("/tool/:toolId/:userId/rent", (req, res, next) => {
+//PATCH route for changing rentedBy to actual user
+router.patch("/tool/:toolId/:userId/rent", (req, res, next) => {
   const { toolId, userId } = req.params;
+
+  if (
+    !mongoose.Types.ObjectId.isValid(toolId) ||
+    !mongoose.Types.ObjectId.isValid(userId)
+  ) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
 
   Tool.findByIdAndUpdate(toolId, { rentedby: userId }, { new: true })
     .populate(["owner", "rentedby", "comment"])
@@ -170,44 +147,28 @@ router.post("/tool/:toolId/:userId/rent", (req, res, next) => {
         model: "User",
       },
     })
-    .then((response) => res.json(response));
-});
-
-//GET route to delete comment
-router.get("/comment/:toolId/:commentId/delete", (req, res, next) => {
-  const { toolId, commentId } = req.params;
-
-  Comment.findByIdAndDelete(commentId).then((response) => {
-    Tool.findByIdAndUpdate(
-      toolId,
-      { $pull: { comment: { $in: [commentId] } } },
-      { new: true }
-    )
-      .populate(["owner", "rentedby", "comment"])
-      .populate({
-        path: "comment",
-        populate: {
-          path: "author",
-          model: "User",
-        },
-      })
-      .then((response) => res.json(response));
-  });
+    .then((response) => res.status(200).json(response))
+    .catch((error) => res.json(error));
 });
 
 //GET route to delete tool
-router.get("/tool/:toolId/delete", (req, res, next) => {
+router.delete("/tool/:toolId/delete", (req, res, next) => {
   const { toolId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(toolId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
 
   Tool.findByIdAndDelete(toolId).then((response) => {
     Tool.find()
       .populate(["owner", "rentedby"])
-      .then((allTools) => res.json(allTools))
+      .then((allTools) => res.status(200).json(allTools))
       .catch((err) => res.json(err));
   });
 });
 
-// PUT  /api/tool/:toolId/edit  -  Updates a specific tool by d
+// PATCH  /api/tool/:toolId/edit  -  Updates a specific tool by id
 router.patch("/tool/:toolId/edit", (req, res, next) => {
   const { toolId } = req.params;
 
@@ -217,37 +178,7 @@ router.patch("/tool/:toolId/edit", (req, res, next) => {
   }
 
   Tool.findByIdAndUpdate(toolId, req.body, { new: true })
-    .then((updatedProject) => res.json(updatedProject))
-    .catch((error) => res.json(error));
-});
-
-//  GET /api/tool/:toolId -  Retrieves a specific project by id
-router.get("/user/:userId", (req, res, next) => {
-  const { userId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ message: "Specified id is not valid" });
-    return;
-  }
-
-  // Each Project document has `tasks` array holding `_id`s of Task documents
-  // We use .populate() method to get swap the `_id`s for the actual Task documents
-  User.findById(userId)
-    .then((user) => res.status(200).json(user))
-    .catch((error) => res.json(error));
-});
-
-// PUT  /api/tool/:toolId/edit  -  Updates a specific tool by d
-router.patch("/user/:userId/edit", (req, res, next) => {
-  const { userId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ message: "Specified id is not valid" });
-    return;
-  }
-
-  User.findByIdAndUpdate(userId, req.body, { new: true })
-    .then((updatedUser) => res.json(updatedUser))
+    .then((updatedProject) => res.status(200).json(updatedProject))
     .catch((error) => res.json(error));
 });
 

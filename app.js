@@ -15,7 +15,13 @@ app.use("/api", allRoutes);
 const toolRouter = require("./routes/tool.routes");
 app.use("/api", toolRouter);
 
-const authRouter = require("./routes/auth.routes"); //  <== IMPORT
+const commentRouter = require("./routes/comment.routes");
+app.use("/api", commentRouter);
+
+const userRouter = require("./routes/user.routes");
+app.use("/api", userRouter);
+
+const authRouter = require("./routes/auth.routes");
 app.use("/auth", authRouter);
 
 require("./error-handling")(app);
