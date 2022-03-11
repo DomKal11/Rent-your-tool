@@ -86,6 +86,20 @@ router.get("/tool/:toolId", (req, res, next) => {
     .catch((error) => res.json(error));
 });
 
+// PATCH  /api/tool/:toolId/edit  -  Updates a specific tool by id
+router.patch("/tool/:toolId/edit", (req, res, next) => {
+  const { toolId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(toolId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
+
+  Tool.findByIdAndUpdate(toolId, req.body, { new: true })
+    .then((updatedProject) => res.status(200).json(updatedProject))
+    .catch((error) => res.json(error));
+});
+
 // PATCH route for changing status (available/rented)
 router.patch("/tool/:toolId/:status", (req, res, next) => {
   const { toolId, status } = req.params;
@@ -166,20 +180,6 @@ router.delete("/tool/:toolId/delete", (req, res, next) => {
       .then((allTools) => res.status(200).json(allTools))
       .catch((err) => res.json(err));
   });
-});
-
-// PATCH  /api/tool/:toolId/edit  -  Updates a specific tool by id
-router.patch("/tool/:toolId/edit", (req, res, next) => {
-  const { toolId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(toolId)) {
-    res.status(400).json({ message: "Specified id is not valid" });
-    return;
-  }
-
-  Tool.findByIdAndUpdate(toolId, req.body, { new: true })
-    .then((updatedProject) => res.status(200).json(updatedProject))
-    .catch((error) => res.json(error));
 });
 
 module.exports = router;
